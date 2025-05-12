@@ -1,0 +1,23 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: db
+    command: --mysql-native-password=ON
+    environment:
+        MYSQL_ROOT_USER: ${ROOT_USER}
+        MYSQL_ROOT_PASSWORD: ${ROOT_PASSWORD}
+        MYSQL_DATABASE: ${DB_NAME}
+        MYSQL_USER: ${DB_USER}
+        MYSQL_PASSWORD: ${DB_PASSWORD}
+        TZ: 'Asia/Tokyo'
+    ports:
+        - "3306:3306"
+    volumes:
+        - db-volume:/var/lib/mysql
+    networks:
+      - golang-blog
+volumes:
+  db-volume:
+
+networks:
+  golang-blog:
