@@ -10,6 +10,7 @@ import (
 
 type UserUsecase interface {
 	Login(user model.User) (*model.LoginUserResponse, error)
+	SignUp(user model.User) error
 }
 
 type userUsecase struct {
@@ -37,4 +38,19 @@ func (uu *userUsecase) Login(user model.User) (*model.LoginUserResponse, error) 
 		Name:  storedUser.Name,
 		Email: storedUser.Email,
 	}, nil
+}
+
+func (uu *userUsecase) SignUp(user model.User) error {
+	if err := uu.uv.UserValidate(user); err != nil {
+		return err
+	}
+	newUser := model.User{
+		Name:     user.Name,
+		Email:    user.Email,
+		Password: user.Password,
+	}
+	if err := uu.ur.CreateUser(&newUser); err != nil {
+		return err
+	}
+	return nil
 }

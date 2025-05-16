@@ -10,6 +10,7 @@ import (
 
 type UserController interface {
 	Login(c echo.Context) error
+	SignUp(c echo.Context) error
 }
 
 type userController struct {
@@ -31,4 +32,18 @@ func (uc *userController) Login(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, res)
+}
+
+func (uc *userController) SignUp(c echo.Context) error {
+	user := model.User{}
+
+	if err := c.Bind(&user); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	if err := uc.uu.SignUp(user); err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusCreated, "User created successfully")
 }

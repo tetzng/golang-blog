@@ -10,5 +10,6 @@ func NewRouter(uc controller.UserController) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.POST("/login", uc.Login)
+	e.POST("/sign_up", uc.SignUp)
 	return e
 }
