@@ -1,19 +1,20 @@
 package main
 
 import (
-	"net/http"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/tetzng/golang-blog/controller"
+	"github.com/tetzng/golang-blog/db"
+	"github.com/tetzng/golang-blog/repository"
+	"github.com/tetzng/golang-blog/router"
+	"github.com/tetzng/golang-blog/usecase"
+	"github.com/tetzng/golang-blog/validator"
 )
 
 func main() {
-
-	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello World!"))
-	})
-	http.ListenAndServe(":3000", r)
+	db := db.NewDB()
+	userRepository := repository.NewUserRepository(db)
+	userValidator := validator.NewUserValidator()
+	userUsecase := usecase.NewUserUsecase(userRepository, userValidator)
+	userController := controller.NewUserController(userUsecase)
+	e := router.NewRouter(userController)
+	e.Logger.Fatal(e.Start(":8080"))
 }
