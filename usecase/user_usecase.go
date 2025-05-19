@@ -1,15 +1,18 @@
 package usecase
 
 import (
-	"errors"
+	"os"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/tetzng/golang-blog/model"
 	"github.com/tetzng/golang-blog/repository"
 	"github.com/tetzng/golang-blog/validator"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserUsecase interface {
-	Login(user model.User) (*model.LoginUserResponse, error)
+	Login(user model.User) (string, error)
 	SignUp(user model.User) error
 }
 
@@ -22,32 +25,42 @@ func NewUserUsecase(ur repository.UserRepository, uv validator.UserValidator) Us
 	return &userUsecase{ur: ur, uv: uv}
 }
 
-func (uu *userUsecase) Login(user model.User) (*model.LoginUserResponse, error) {
+func (uu *userUsecase) Login(user model.User) (string, error) {
 	if err := uu.uv.UserValidate(user); err != nil {
-		return nil, err
+		return "", err
 	}
 	storedUser := model.User{}
 	if err := uu.ur.GetUserByEmail(&storedUser, user.Email); err != nil {
-		return nil, err
+		return "", err
 	}
-	if storedUser.Password != user.Password {
-		return nil, errors.New("invalid password")
+	err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(user.Password))
+	if err != nil {
+		return "", fmt.Errorf("invalid credentials: %w", err)
 	}
-	return &model.LoginUserResponse{
-		Id:    storedUser.Id,
-		Name:  storedUser.Name,
-		Email: storedUser.Email,
-	}, nil
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": storedUser.Id,
+		"exp":     time.Now().Add(time.Hour * 12).Unix(),
+	})
+	ts, err := token.SignedString([]byte(os.Getenv("SECRET")))
+	if err != nil {
+		return "", err
+	}
+
+	return ts, nil
 }
 
 func (uu *userUsecase) SignUp(user model.User) error {
 	if err := uu.uv.UserValidate(user); err != nil {
 		return err
 	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
+	if err != nil {
+		return err
+	}
 	newUser := model.User{
 		Name:     user.Name,
 		Email:    user.Email,
-		Password: user.Password,
+		Password: string(hash),
 	}
 	if err := uu.ur.CreateUser(&newUser); err != nil {
 		return err

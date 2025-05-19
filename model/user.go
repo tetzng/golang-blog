@@ -11,7 +11,7 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type LoginUserResponse struct {
+type UserResponse struct {
 	Id    uint   `json:"id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`

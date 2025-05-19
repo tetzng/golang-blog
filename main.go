@@ -15,6 +15,9 @@ func main() {
 	userValidator := validator.NewUserValidator()
 	userUsecase := usecase.NewUserUsecase(userRepository, userValidator)
 	userController := controller.NewUserController(userUsecase)
-	e := router.NewRouter(userController)
+
+	topUsecase := usecase.NewTopUsecase(userRepository)
+	topController := controller.NewTopController(topUsecase)
+	e := router.NewRouter(userController, topController)
 	e.Logger.Fatal(e.Start(":8080"))
 }
