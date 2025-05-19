@@ -1,11 +1,10 @@
 package usecase
 
 import (
-	"errors"
-
 	"github.com/tetzng/golang-blog/model"
 	"github.com/tetzng/golang-blog/repository"
 	"github.com/tetzng/golang-blog/validator"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserUsecase interface {
@@ -30,8 +29,9 @@ func (uu *userUsecase) Login(user model.User) (*model.LoginUserResponse, error) 
 	if err := uu.ur.GetUserByEmail(&storedUser, user.Email); err != nil {
 		return nil, err
 	}
-	if storedUser.Password != user.Password {
-		return nil, errors.New("invalid password")
+	err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(user.Password))
+	if err != nil {
+		return nil, err
 	}
 	return &model.LoginUserResponse{
 		Id:    storedUser.Id,
@@ -44,10 +44,14 @@ func (uu *userUsecase) SignUp(user model.User) error {
 	if err := uu.uv.UserValidate(user); err != nil {
 		return err
 	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
+	if err != nil {
+		return err
+	}
 	newUser := model.User{
 		Name:     user.Name,
 		Email:    user.Email,
-		Password: user.Password,
+		Password: string(hash),
 	}
 	if err := uu.ur.CreateUser(&newUser); err != nil {
 		return err
