@@ -35,7 +35,7 @@ func (uu *userUsecase) Login(user model.User) (string, error) {
 	}
 	err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(user.Password))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("invalid credentials: %w", err)
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": storedUser.Id,
